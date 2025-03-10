@@ -1,134 +1,139 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { Plugin, MarkdownPostProcessorContext, MarkdownView, PluginSettingTab, Setting, App } from 'obsidian';
+import * as pako from 'pako';
 
-// Remember to rename these classes and interfaces!
-
-interface MyPluginSettings {
-	mySetting: string;
+interface MermaidLinksSettings {
+    editLinkText: string;
+    fullscreenLinkText: string;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+const DEFAULT_SETTINGS: MermaidLinksSettings = {
+    editLinkText: 'Edit',
+    fullscreenLinkText: 'Full Screen'
+};
+
+export default class MermaidLinksPlugin extends Plugin {
+    settings: MermaidLinksSettings;
+
+    async onload() {
+        console.log('Loading MermaidLinks plugin');
+        
+        await this.loadSettings();
+        
+        this.addSettingTab(new MermaidLinksSettingTab(this.app, this));
+        
+        this.registerMarkdownPostProcessor(this.processMermaidDiagrams.bind(this));
+    }
+
+    onunload() {
+        console.log('Unloading MermaidLinks plugin');
+    }
+
+    async loadSettings() {
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    }
+
+    async saveSettings() {
+        await this.saveData(this.settings);
+    }
+
+    processMermaidDiagrams(el: HTMLElement, ctx: MarkdownPostProcessorContext) {
+        // Find all pre > code.language-mermaid elements
+        const mermaidBlocks = el.querySelectorAll('pre > code.language-mermaid');
+        mermaidBlocks.forEach(mermaidBlock => {
+            const preElement = mermaidBlock.parentElement;
+            if (!preElement) return;
+            
+            // Get the Mermaid diagram content
+            const mermaidContent = mermaidBlock.textContent;
+            if (!mermaidContent) return;
+
+			console.log("VJA2 processing mermaid diagram", mermaidContent);
+            // Generate PAKO compressed content
+            const compressed = this.compressMermaid(mermaidContent);
+            
+            // Create links container
+            const linksContainer = document.createElement('div');
+            linksContainer.className = 'mermaid-links';
+            linksContainer.style.textAlign = 'right';
+            linksContainer.style.marginTop = '5px';
+            
+            // Create edit link
+            const editLink = document.createElement('a');
+            editLink.href = `https://mermaid.live/edit#pako:${compressed}`;
+            editLink.textContent = this.settings.editLinkText;
+            editLink.target = '_blank';
+            editLink.className = 'mermaid-edit-link';
+            editLink.style.marginRight = '10px';
+            
+            // Create full screen link
+            const fullScreenLink = document.createElement('a');
+            fullScreenLink.href = `https://mermaid.live/view#pako:${compressed}`;
+            fullScreenLink.textContent = this.settings.fullscreenLinkText;
+            fullScreenLink.target = '_blank';
+            fullScreenLink.className = 'mermaid-fullscreen-link';
+            
+            // Add links to container
+            linksContainer.appendChild(editLink);
+            linksContainer.appendChild(fullScreenLink);
+            
+            // Insert links after the pre element
+            preElement.parentNode?.insertBefore(linksContainer, preElement.nextSibling);
+        });
+    }
+
+    compressMermaid(mermaidCode: string): string {
+        // Compress the Mermaid code using PAKO
+		const graph = {
+			"code": mermaidCode,
+			"mermaid": {"theme": "default"}
+		}
+        const textEncoder = new TextEncoder();
+        const uint8Array = textEncoder.encode(JSON.stringify(graph));
+        const compressedData = pako.deflate(uint8Array);
+        
+        // Convert to base64
+        return btoa(
+            Array.from(compressedData)
+                .map(byte => String.fromCharCode(byte))
+                .join('')
+        )
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_');
+    }
 }
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+class MermaidLinksSettingTab extends PluginSettingTab {
+    plugin: MermaidLinksPlugin;
 
-	async onload() {
-		await this.loadSettings();
+    constructor(app: App, plugin: MermaidLinksPlugin) {
+        super(app, plugin);
+        this.plugin = plugin;
+    }
 
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
+    display(): void {
+        const { containerEl } = this;
+        containerEl.empty();
 
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
+        containerEl.createEl('h2', { text: 'Mermaid Links Settings' });
 
-		// This adds a simple command that can be triggered anywhere
-		this.addCommand({
-			id: 'open-sample-modal-simple',
-			name: 'Open sample modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
-			}
-		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'sample-editor-command',
-			name: 'Sample editor command',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				console.log(editor.getSelection());
-				editor.replaceSelection('Sample Editor Command');
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-sample-modal-complex',
-			name: 'Open sample modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
+        new Setting(containerEl)
+            .setName('Edit Link Text')
+            .setDesc('The text to display for the edit link')
+            .addText(text => text
+                .setValue(this.plugin.settings.editLinkText)
+                .onChange(async (value) => {
+                    this.plugin.settings.editLinkText = value;
+                    await this.plugin.saveSettings();
+                }));
 
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
-				}
-			}
-		});
-
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
-	}
-
-	onunload() {
-
-	}
-
-	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-	}
-
-	async saveSettings() {
-		await this.saveData(this.settings);
-	}
-}
-
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
-
-	onOpen() {
-		const {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
-
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
-	}
-}
-
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
-
-	constructor(app: App, plugin: MyPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	display(): void {
-		const {containerEl} = this;
-
-		containerEl.empty();
-
-		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
-				.onChange(async (value) => {
-					this.plugin.settings.mySetting = value;
-					await this.plugin.saveSettings();
-				}));
-	}
+        new Setting(containerEl)
+            .setName('Full Screen Link Text')
+            .setDesc('The text to display for the full screen link')
+            .addText(text => text
+                .setValue(this.plugin.settings.fullscreenLinkText)
+                .onChange(async (value) => {
+                    this.plugin.settings.fullscreenLinkText = value;
+                    await this.plugin.saveSettings();
+                }));
+    }
 }

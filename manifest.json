@@ -1,11 +1,11 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
+	"id": "obsidian-mermaid-links",
+	"name": "Obsidian Mermaid Links",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
+	"description": "Add view & edit links to all mermaid diagrams.",
 	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"authorUrl": "https://github.com/vinayaugustine",
+	"fundingUrl": "https://github.com/vinayaugustine",
 	"isDesktopOnly": false
 }
