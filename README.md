@@ -1,94 +1,69 @@
-# Obsidian Sample Plugin
+# Obsidian Mermaid Links
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+A plugin for [Obsidian](https://obsidian.md) that adds convenient "Edit" and "Full Screen" links to all your Mermaid diagrams.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+## Features
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+- Automatically adds links below any Mermaid diagram in your notes
+- "Edit" link opens the diagram in [Mermaid Live Editor](https://mermaid.live/edit) for easy modification
+- "Full Screen" link opens the diagram in [Mermaid Live Viewer](https://mermaid.live/view) for better visibility
+- Customizable link text through plugin settings
 
-## First time developing plugins?
+## How It Works
 
-Quick starting guide for new plugin devs:
+The plugin scans your notes for Mermaid code blocks and adds two links below each diagram:
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+1. **Edit**: Opens the diagram in Mermaid Live Editor, allowing you to modify the diagram in a specialized editor
+2. **Full Screen**: Opens the diagram in Mermaid Live Viewer, providing a clean, full-screen view
 
-## Releasing new releases
+Both links use Mermaid Live's PAKO compression format to transfer your diagram code efficiently.
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+## Installation
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+1. Open Obsidian Settings
+2. Go to Community Plugins and disable Safe Mode
+3. Click "Browse" and search for "Mermaid Links"
+4. Install the plugin and enable it
 
-## Adding your plugin to the community plugin list
+Or install manually:
+- Download the latest release from the [GitHub releases page](https://github.com/vinayaugustine/obsidian-mermaid-links/releases)
+- Extract the files into your vault's `.obsidian/plugins/obsidian-mermaid-links` folder
+- Reload Obsidian and enable the plugin in the settings
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+## Configuration
 
-## How to use
+You can customize the text displayed for both links in the plugin settings:
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+- **Edit Link Text**: The text to display for the edit link (default: "Edit")
+- **Full Screen Link Text**: The text to display for the full screen link (default: "Full Screen")
 
-## Manually installing the plugin
+## Usage Example
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+1. Create a Mermaid diagram in your note:
 
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint .\src\`
-
-## Funding URL
-
-You can include funding URLs where people who use your plugin can financially support it.
-
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
+````markdown
+```mermaid
+graph TD
+    A[Start] --> B{Is it working?}
+    B -->|Yes| C[Great!]
+    B -->|No| D[Debug]
+    D --> B
 ```
+````
 
-If you have multiple URLs, you can also do:
+2. The plugin automatically adds "Edit" and "Full Screen" links below the diagram
+3. Click the "Edit" link to modify your diagram in Mermaid Live Editor
+4. Click the "Full Screen" link to view your diagram in a clean, full-screen interface
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
-```
+## Compatibility
 
-## API Documentation
+- Requires Obsidian v0.15.0 or above
+- Works with all standard Mermaid diagram types supported by Obsidian
 
-See https://github.com/obsidianmd/obsidian-api
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+## Support
+
+If you encounter any issues or have feature requests, please file an issue on the [GitHub repository](https://github.com/vinayaugustine/obsidian-mermaid-links/issues).
